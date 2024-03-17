@@ -1,16 +1,13 @@
-name: Go Build
+name: Go Build and Release
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    tags:
+      - 'v*'
 
 jobs:
   build:
-    name: Build
+    name: Build and Release
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -19,9 +16,6 @@ jobs:
         include:
           - goos: windows
             extension: .exe
-        exclude:
-          - goos: darwin
-            goarch: arm64
     steps:
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -32,8 +26,38 @@ jobs:
     - name: Build
       run: |
         env GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
-    - name: Upload Artifacts
+    - name: Upload Artifacts (temporary)
       uses: actions/upload-artifact@v2
       with:
-        name: myprogram-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: myprogram-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
+        name: mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: .
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
+          asset_name: mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
+          asset_content_type: application/octet-stream
