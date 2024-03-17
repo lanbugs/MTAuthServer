@@ -45,7 +45,7 @@ jobs:
           gh-cli-version: 2.39.1
       - name: create github release
         run: |
-          gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} --notes-from-tag dist/release/*
+          gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} --notes-from-tag ./mthauthserver-*
         env:
           GITHUB_TOKEN: ${{ secrets.MY_PAT }}
 
