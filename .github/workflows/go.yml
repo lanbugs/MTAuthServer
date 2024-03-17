@@ -33,33 +33,18 @@ jobs:
         name: mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}
         path: mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
 
+
   release:
     needs: build
     runs-on: ubuntu-latest
     environment: default
-    steps:
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Install GH CLI
+        uses: dev-hanz-ops/install-gh-cli-action@v0.1.0
+        with:
+          gh-cli-version: 2.39.1
+      - name: create github release
+        run: |
+          gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} --notes-from-tag dist/release/*
         env:
           GITHUB_TOKEN: ${{ secrets.MY_PAT }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: .
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_PAT }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
-          asset_name: mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
-          asset_content_type: application/octet-stream
