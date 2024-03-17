@@ -32,7 +32,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           # either 'goreleaser' (default) or 'goreleaser-pro'
-          distribution: mthauthserver
+          distribution: goreleaser
           version: latest
           args: release --clean
         env:
