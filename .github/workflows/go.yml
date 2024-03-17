@@ -1,51 +1,41 @@
-name: Go Build and Release
+# .github/workflows/release.yml
+name: mthauthserver
 
 on:
+  pull_request:
   push:
+    # run only against tags
     tags:
-      - 'v*'
+      - "*"
+
+permissions:
+  contents: write
+  # packages: write
+  # issues: write
 
 jobs:
-  build:
-    name: Build and Release
-    runs-on: ubuntu-latest
-    environment: default
-    strategy:
-      matrix:
-        goos: [windows, darwin, linux]
-        goarch: [amd64, arm64]
-        include:
-          - goos: windows
-            extension: .exe
-    steps:
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '^1.15'
-    - name: Check out code
-      uses: actions/checkout@v2
-    - name: Build
-      run: |
-        env GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
-    - name: Upload Artifacts (temporary)
-      uses: actions/upload-artifact@v2
-      with:
-        name: mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: mthauthserver-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension || '' }}
-
-
-  release:
-    needs: build
+  goreleaser:
     runs-on: ubuntu-latest
     environment: default
     steps:
-      - name: Install GH CLI
-        uses: dev-hanz-ops/install-gh-cli-action@v0.1.0
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          gh-cli-version: 2.39.1
-      - name: create github release
-        run: |
-          gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} --notes-from-tag ./mthauthserver-*
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      # More assembly might be required: Docker logins, GPG, etc.
+      # It all depends on your needs.
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro'
+          distribution: mthauthserver
+          version: latest
+          args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.MY_PAT }}
-
+          GITHUB_TOKEN: ${{ secrets.PT_KEY }}
+          # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
+          # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
