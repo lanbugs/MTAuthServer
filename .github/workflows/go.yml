@@ -9,6 +9,7 @@ jobs:
   build:
     name: Build and Release
     runs-on: ubuntu-latest
+    environment: default
     strategy:
       matrix:
         goos: [windows, darwin, linux]
@@ -35,6 +36,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    environment: default
     steps:
       - name: Create Release
         id: create_release
