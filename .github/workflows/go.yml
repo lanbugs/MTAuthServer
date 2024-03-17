@@ -38,6 +38,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: default
+    steps:
       - name: Install GH CLI
         uses: dev-hanz-ops/install-gh-cli-action@v0.1.0
         with:
